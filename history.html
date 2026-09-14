@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>BFI Movie Catcher - My movie alerts</title>
+  <style>
+    :root {
+      --bfi-black: #000000;
+      --bfi-purple: #783DF6;
+      --bfi-bg: #FEFEFE;
+      --bfi-grey: #6b6b6b;
+      --bfi-border: #e2e2e2;
+      --status-green: #0a7d24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bfi-bg);
+      color: var(--bfi-black);
+    }
+    header {
+      background: var(--bfi-black);
+      color: #fff;
+      padding: 22px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header img { width: 34px; height: 34px; display: block; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    header p { font-size: 12px; margin: 2px 0 0; color: #b9b9b9; }
+
+    main { max-width: 480px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--bfi-grey);
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .back-link:hover { color: var(--bfi-purple); }
+
+    .empty { padding: 16px 4px; font-size: 12px; color: var(--bfi-grey); }
+
+    section.group { margin-bottom: 26px; }
+    section.group h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--bfi-grey);
+      margin: 0 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--bfi-border);
+    }
+    .group-sub { font-size: 11px; color: var(--bfi-grey); margin: 0 0 12px; }
+
+    .film-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--bfi-border);
+    }
+    .film-row:last-child { border-bottom: none; }
+    .film-row-title { font-size: 13px; font-weight: 700; }
+    .remove-btn {
+      flex: none;
+      border: 1px solid var(--bfi-border);
+      background: #fff;
+      color: var(--bfi-grey);
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .remove-btn:hover { border-color: #c0392b; color: #c0392b; }
+
+    .specific-film { padding: 10px 0; border-bottom: 1px solid var(--bfi-border); }
+    .specific-film:last-child { border-bottom: none; }
+    .specific-film-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .specific-film-toggle {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+    .specific-film-toggle .caret { font-size: 10px; color: var(--bfi-grey); flex: none; }
+    .specific-film-toggle .film-row-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .specific-film-toggle .time-count {
+      flex: none;
+      font-size: 10.5px;
+      font-weight: 400;
+      color: var(--bfi-grey);
+    }
+    .time-list { margin-top: 6px; }
+    .time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 0 5px 12px;
+      font-size: 12px;
+      color: var(--bfi-black);
+    }
+    .time-remove {
+      flex: none;
+      border: none;
+      background: transparent;
+      color: var(--bfi-grey);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icon48.png" alt="BFI Movie Catcher" />
+    <div>
+      <h1>My movie alerts</h1>
+      <p>Films you're currently notified about</p>
+    </div>
+  </header>
+
+  <main>
+    <a href="popup.html" class="back-link">← Back to BFI IMAX Ticket Alert</a>
+
+    <section class="group">
+      <h2>All screenings</h2>
+      <p class="group-sub">Notified about any time these films open up.</p>
+      <div id="anySlotList"><div class="empty">Loading…</div></div>
+    </section>
+
+    <section class="group">
+      <h2>Specific times only</h2>
+      <p class="group-sub">Notified only for the exact times picked below.</p>
+      <div id="specificList"><div class="empty">Loading…</div></div>
+    </section>
+  </main>
+
+  <script src="history.js"></script>
+</body>
+</html>

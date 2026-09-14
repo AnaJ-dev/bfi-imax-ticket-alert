@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Get a BFI IMAX sold-out ticket alert: Odyssey, Dune, Digger and more",
+  "version": "1.0.0",
+  "description": "Buy tickets for The Odyssey, Dune: Part Three, Digger and more. Get sold-out ticket alert for BFI IMAX directly in your browser.",
+  "permissions": ["alarms", "storage", "notifications", "tabs", "scripting", "windows"],
+  "host_permissions": ["https://whatson.bfi.org.uk/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

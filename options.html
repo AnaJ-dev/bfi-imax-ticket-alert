@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>BFI Movie Catcher - Settings</title>
+  <style>
+    :root {
+      --bfi-black: #000000;
+      --bfi-purple: #783DF6;
+      --bfi-purple-dark: #5f2fd1;
+      --bfi-bg: #FEFEFE;
+      --bfi-grey: #6b6b6b;
+      --bfi-border: #e2e2e2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bfi-bg);
+      color: var(--bfi-black);
+    }
+    header {
+      background: var(--bfi-black);
+      color: #fff;
+      padding: 22px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header img { width: 34px; height: 34px; display: block; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    header p { font-size: 12px; margin: 2px 0 0; color: #b9b9b9; }
+
+    main { max-width: 480px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--bfi-grey);
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .back-link:hover { color: var(--bfi-purple); }
+
+    section { margin-bottom: 28px; }
+    section h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--bfi-grey);
+      margin: 0 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--bfi-border);
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hint { font-size: 11.5px; color: var(--bfi-grey); margin: 2px 0 8px; line-height: 1.5; }
+    .hint code {
+      background: #f2f2f2;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .optional { font-weight: 400; color: var(--bfi-grey); text-transform: none; letter-spacing: 0; }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--bfi-border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+      transition: border-color 0.15s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--bfi-purple);
+      box-shadow: 0 0 0 3px rgba(120, 61, 246, 0.15);
+    }
+    .secondary-btn {
+      margin-top: 6px;
+      padding: 7px 14px;
+      background: #fff;
+      color: var(--bfi-black);
+      border: 1px solid var(--bfi-border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .secondary-btn:hover { border-color: var(--bfi-purple); }
+    .test-status { display: inline-block; margin-left: 8px; font-size: 11.5px; }
+    .test-status.ok { color: #0a7d24; }
+    .test-status.fail { color: #c0392b; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1px solid var(--bfi-border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .toggle-row .label { font-size: 13px; font-weight: 700; }
+    .toggle-row .desc { font-size: 11.5px; color: var(--bfi-grey); margin-top: 2px; }
+
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; margin-left: 12px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background-color: #d6d6d6; transition: 0.15s; border-radius: 100px;
+    }
+    .slider::before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+      background-color: white; transition: 0.15s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--bfi-purple); }
+    input:checked + .slider::before { transform: translateX(18px); }
+
+    button#save {
+      width: 100%;
+      padding: 12px;
+      background: var(--bfi-purple);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    button#save:hover { background: var(--bfi-purple-dark); }
+
+    #status {
+      margin-top: 12px;
+      font-size: 12.5px;
+      color: #0a7d24;
+      text-align: center;
+      min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icon48.png" alt="BFI Movie Catcher" />
+    <div>
+      <h1>Set BFI IMAX Ticket Alert</h1>
+      <p>Settings - Be the first to book the moment tickets become available</p>
+    </div>
+  </header>
+
+  <main>
+    <a href="popup.html" id="backLink" class="back-link">← Back to BFI IMAX Ticket Alert</a>
+    <section>
+      <h2>Watching</h2>
+      <p class="hint">Choose which film(s) to get notified about from the main popup - click the extension icon, pick a movie, then tap "Get notified for all screenings". You can do this for several films at once.</p>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Auto-check</div>
+          <div class="desc">Checks by itself every few minutes, catching slots even while you're not looking. Turn off to only check when you tap "Check now" yourself.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="enabled" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field" style="margin: 10px 0 16px;">
+        <label for="intervalMinutes">Auto-check every (minutes)</label>
+        <input type="number" id="intervalMinutes" min="1" max="60" value="1" />
+      </div>
+      <p class="hint" style="margin-top:8px;">When a followed film opens up, a browser window opens straight to that screening - finish checkout there yourself. Toggles and the interval apply instantly - no need to hit Save.</p>
+    </section>
+
+    <section>
+      <h2>Alerts</h2>
+
+      <div class="toggle-row">
+        <div>
+          <div class="label">Desktop notification</div>
+          <div class="desc">A pop-up notification and a red badge on the toolbar icon when a slot opens.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="desktopNotifications" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div id="permissionCheck">
+        <p class="hint" style="margin: 2px 0 8px;">Chrome can't actually tell us whether your operating system is blocking notifications - the only way to know for sure is to send one and check.</p>
+        <div class="field" style="margin-bottom: 8px;">
+          <button type="button" id="testNotification" class="secondary-btn" style="margin-top: 0;">Send test notification</button>
+          <span id="testNotificationStatus" class="test-status"></span>
+        </div>
+        <div id="notificationConfirm" style="display:none; margin: 6px 0 10px;">
+          <span style="font-size: 12.5px; margin-right: 8px;">Did a notification pop up?</span>
+          <button type="button" id="notifSeenYes" class="secondary-btn" style="margin-top:0;">Yes</button>
+          <button type="button" id="notifSeenNo" class="secondary-btn" style="margin-top:0;">No</button>
+        </div>
+        <div id="permissionWarning" class="test-status fail" style="display:none; margin: 6px 0 10px;"></div>
+      </div>
+    </section>
+
+    <button id="save">Save settings</button>
+    <div id="status"></div>
+    <a href="popup.html" class="back-link" style="display:block; margin: 6px 0 0;">← Back to BFI IMAX Ticket Alert</a>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>

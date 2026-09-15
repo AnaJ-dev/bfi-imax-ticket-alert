@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>BFI Movie Catcher</title>
+  <title>BFI IMAX Ticket Alert</title>
   <style>
     :root {
       --ink: #111111;
@@ -136,6 +136,8 @@
     }
     .film-select-option:hover, .film-select-option.active { background: #f4f0fe; }
     .film-select-option.selected { font-weight: 700; color: var(--accent-purple); }
+    .film-select-option.placeholder { color: var(--grey); font-style: italic; }
+    .film-select-option.placeholder.selected { color: var(--accent-purple); font-style: normal; }
 
     .watch-toggle {
       display: block;
@@ -223,6 +225,20 @@
     .info-panel p:last-child { margin-bottom: 0; }
     .info-panel a { color: var(--accent-purple); }
 
+    .pin-hint {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      background: #fff6e5;
+      border: 1px solid #f3d9a4;
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 10px;
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: #6b4f14;
+    }
+    .pin-hint[hidden] { display: none; }
     .bell-flash {
       position: relative;
       background: #eaf7ee;
@@ -305,6 +321,7 @@
       cursor: pointer;
       color: var(--ink);
     }
+    .pager[hidden] { display: none; }
     .pager button:disabled { opacity: 0.4; cursor: default; }
     .pager button:not(:disabled):hover { border-color: var(--accent-purple); }
 
@@ -350,13 +367,18 @@
 </head>
 <body>
   <header>
-    <img src="icon32.png" alt="BFI Movie Catcher" />
+    <img src="icon32.png" alt="BFI IMAX Ticket Alert" />
     <div class="titles">
       <h1>Set BFI IMAX Ticket Alert</h1>
       <p>Be the first to book the moment tickets become available</p>
     </div>
   </header>
   <main>
+    <div id="pinHint" class="pin-hint" hidden>
+      <span>📌</span>
+      <span>Pin this extension so alerts are visible: click the puzzle-piece icon in Chrome's toolbar, then the pin icon next to this extension. The red badge that counts open seats only shows on a pinned icon.</span>
+    </div>
+
     <div class="film-picker">
       <label id="filmSelectLabel" for="filmSelectBtn">Choose your movie</label>
       <div class="film-select">
@@ -380,6 +402,7 @@
       <p><strong>Films:</strong> the movie list is re-checked against BFI's own site every time you open it, so new titles should show up automatically. That said, it depends on BFI's listing pages keeping the same format, so we can't guarantee every new release is caught the moment it's announced.</p>
       <p><strong>My movie alerts:</strong> see every film and specific time you're currently set to be notified about, all in one place - tap it in the footer below.</p>
     </div>
+    <div id="retiredNotice" class="pin-hint" hidden></div>
     <div id="bellFlash" class="bell-flash" hidden></div>
     <div id="list"><div class="empty">Loading…</div></div>
     <div class="pager" id="pager" hidden>
@@ -398,6 +421,7 @@
       <a class="settings-link" href="https://github.com/AnaJ-dev/bfi-imax-ticket-alert" target="_blank">View source</a>
     </div>
   </main>
+  <script src="shared.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

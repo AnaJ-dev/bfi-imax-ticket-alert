@@ -1,20 +1,3 @@
-function formatDateTime(dt) {
-  const abbrev = { Sunday: "Sun", Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu", Friday: "Fri", Saturday: "Sat" };
-  return dt.replace(/^(\w+)/, (day) => abbrev[day] || day);
-}
-
-function parseDateTime(dt) {
-  return new Date(dt.replace(/^\w+\s+/, ""));
-}
-
-function sortByDateTime(times) {
-  return [...times].sort((a, b) => parseDateTime(a) - parseDateTime(b));
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
 async function render() {
   const { watchedFilms = [], filmStates = {} } = await chrome.storage.local.get(["watchedFilms", "filmStates"]);
 

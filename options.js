@@ -3,14 +3,52 @@ const ALARM_NAME = "check-odyssey";
 const FIELDS = ["enabled", "desktopNotifications", "intervalMinutes"];
 
 async function load() {
+  await showPinHintIfUnpinned();
+  await showCookieReport();
   const stored = await chrome.storage.local.get(FIELDS);
   document.getElementById("enabled").checked = stored.enabled !== false;
   const desktopOn = stored.desktopNotifications !== false;
   document.getElementById("desktopNotifications").checked = desktopOn;
   document.getElementById("permissionCheck").style.display = desktopOn ? "" : "none";
-  document.getElementById("intervalMinutes").value = stored.intervalMinutes || 1;
+  // Must use the same default as background.js, or the field shows a number
+  // the alarm is not actually using.
+  document.getElementById("intervalMinutes").value = clampIntervalMinutes(stored.intervalMinutes);
 
   if (desktopOn) await checkNotificationPermission();
+}
+
+// H4: the badge is drawn on the extension icon, which Chrome does not pin by
+// default. An extension cannot pin itself, so tell the user how.
+async function showPinHintIfUnpinned() {
+  try {
+    const { isOnToolbar } = await chrome.action.getUserSettings();
+    document.getElementById("pinHint").hidden = isOnToolbar !== false;
+  } catch (err) {
+    // getUserSettings needs Chrome 91+; on older builds just leave the hint off.
+  }
+}
+
+// Records which cookie-banner button the extension last clicked. The click is
+// far too fast to watch on the page, so it is reported here instead.
+async function showCookieReport() {
+  const el = document.getElementById("cookieReport");
+  const { lastCookieBanner } = await chrome.storage.local.get("lastCookieBanner");
+  if (!lastCookieBanner) return;
+
+  const when = new Date(lastCookieBanner.at).toLocaleString();
+  if (!lastCookieBanner.clicked) {
+    el.textContent = `Last booking page (${when}): no cookie banner was showing, so nothing was clicked.`;
+    return;
+  }
+
+  const accepted = /accept/i.test(lastCookieBanner.clicked);
+  el.textContent =
+    `Last booking page (${when}): clicked "${lastCookieBanner.clicked}"` +
+    (accepted
+      ? " - that banner offered no reject option."
+      : " - your cookies were not accepted.") +
+    (lastCookieBanner.offered?.length ? ` Buttons offered: ${lastCookieBanner.offered.join(", ")}.` : "");
+  el.style.color = accepted ? "#b06a10" : "";
 }
 
 async function checkNotificationPermission() {
@@ -59,20 +97,11 @@ document.getElementById("notifSeenNo")?.addEventListener("click", () => {
   status.className = "test-status fail";
 });
 
-async function sendMessageSafe(msg) {
-  try {
-    return await chrome.runtime.sendMessage(msg);
-  } catch (err) {
-    console.error("sendMessage failed - the extension was likely reloaded; refresh this page.", err);
-    return null;
-  }
-}
-
 function syncAlarm(enabled, intervalMinutes) {
   if (enabled === false) {
     chrome.alarms.clear(ALARM_NAME);
   } else {
-    chrome.alarms.create(ALARM_NAME, { periodInMinutes: Math.min(60, Math.max(1, intervalMinutes || 1)) });
+    chrome.alarms.create(ALARM_NAME, { periodInMinutes: clampIntervalMinutes(intervalMinutes) });
   }
 }
 
@@ -98,16 +127,21 @@ document.getElementById("desktopNotifications")?.addEventListener("change", asyn
   flashStatus(desktopOn ? "Desktop notification on" : "Desktop notification off");
 });
 
-async function save() {
-  const intervalMinutes = Math.min(60, Math.max(1, Number(document.getElementById("intervalMinutes").value) || 1));
+// L5: the two switches saved on change but the interval needed the Save button,
+// so a user who typed a value and closed the page lost it silently. Everything
+// saves on change now and the button is gone.
+async function saveInterval() {
+  const field = document.getElementById("intervalMinutes");
+  const intervalMinutes = clampIntervalMinutes(field.value);
+  field.value = intervalMinutes;
   await chrome.storage.local.set({ intervalMinutes });
 
   const { enabled } = await chrome.storage.local.get("enabled");
   syncAlarm(enabled, intervalMinutes);
 
-  flashStatus("Saved");
+  flashStatus(`Checking every ${intervalMinutes} min`);
 }
 
 document.addEventListener("DOMContentLoaded", load);
-document.getElementById("save")?.addEventListener("click", save);
+document.getElementById("intervalMinutes")?.addEventListener("change", saveInterval);
 

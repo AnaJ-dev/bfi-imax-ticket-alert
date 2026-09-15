@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>BFI Movie Catcher - Settings</title>
+  <title>BFI IMAX Ticket Alert - Settings</title>
   <style>
     :root {
       --bfi-black: #000000;
@@ -64,6 +64,20 @@
       margin-bottom: 6px;
     }
     .hint { font-size: 11.5px; color: var(--bfi-grey); margin: 2px 0 8px; line-height: 1.5; }
+    .pin-hint {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      background: #fff6e5;
+      border: 1px solid #f3d9a4;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #6b4f14;
+    }
+    .pin-hint[hidden] { display: none; }
     .hint code {
       background: #f2f2f2;
       padding: 1px 5px;
@@ -153,7 +167,7 @@
 </head>
 <body>
   <header>
-    <img src="icon48.png" alt="BFI Movie Catcher" />
+    <img src="icon48.png" alt="BFI IMAX Ticket Alert" />
     <div>
       <h1>Set BFI IMAX Ticket Alert</h1>
       <p>Settings - Be the first to book the moment tickets become available</p>
@@ -162,6 +176,10 @@
 
   <main>
     <a href="popup.html" id="backLink" class="back-link">← Back to BFI IMAX Ticket Alert</a>
+    <div id="pinHint" class="pin-hint" hidden>
+      <span>📌</span>
+      <span>This extension is not pinned to your toolbar. Click the puzzle-piece icon in Chrome's toolbar, then the pin icon next to this extension. The red badge that counts open seats is drawn on the extension's icon, so it is only visible once the icon is pinned.</span>
+    </div>
     <section>
       <h2>Watching</h2>
       <p class="hint">Choose which film(s) to get notified about from the main popup - click the extension icon, pick a movie, then tap "Get notified for all screenings". You can do this for several films at once.</p>
@@ -177,9 +195,15 @@
       </div>
       <div class="field" style="margin: 10px 0 16px;">
         <label for="intervalMinutes">Auto-check every (minutes)</label>
-        <input type="number" id="intervalMinutes" min="1" max="60" value="1" />
+        <input type="number" id="intervalMinutes" min="1" max="60" value="5" />
       </div>
-      <p class="hint" style="margin-top:8px;">When a followed film opens up, a browser window opens straight to that screening - finish checkout there yourself. Toggles and the interval apply instantly - no need to hit Save.</p>
+      <p class="hint" style="margin-top:8px;">When a followed film opens up, a background tab opens straight to that screening and comes to the front once it gets there - finish checkout there yourself. Toggles and the interval apply instantly - there is nothing to save.</p>
+    </section>
+
+    <section>
+      <h2>Cookies on BFI's site</h2>
+      <p class="hint">When this extension opens a booking page it dismisses BFI's cookie banner, so the banner cannot cover the Buy link. It always takes the reject option where the banner offers one, and only falls back to "Accept cookies" on a banner with no reject button at all.</p>
+      <p class="hint" id="cookieReport" style="margin-top:8px;">It hasn't opened a booking page yet, so it hasn't touched a cookie banner.</p>
     </section>
 
     <section>
@@ -210,11 +234,11 @@
       </div>
     </section>
 
-    <button id="save">Save settings</button>
     <div id="status"></div>
     <a href="popup.html" class="back-link" style="display:block; margin: 6px 0 0;">← Back to BFI IMAX Ticket Alert</a>
   </main>
 
+  <script src="shared.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

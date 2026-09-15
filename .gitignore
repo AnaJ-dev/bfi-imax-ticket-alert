@@ -1,0 +1,12 @@
+.DS_Store
+bfi-imax-ticket-alert/
+bfi-imax-ticket-alert.zip
+
+# Internal notes - not for the public repo
+ISSUES.md
+STORE_LISTING.md
+
+# Chrome Web Store submission assets - not source
+screenshots/
+promo title/
+kofi-avatar.svg

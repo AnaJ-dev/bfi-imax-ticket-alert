@@ -1,16 +1,8 @@
 const PAGE_SIZE = 10;
-const DEFAULT_FILM = { title: "The Odyssey", permalink: "odyssey-the-film-imax-70mm-2026" };
 let currentPage = 1;
 
-async function sendMessageSafe(msg) {
-  try {
-    return await chrome.runtime.sendMessage(msg);
-  } catch (err) {
-    return null;
-  }
-}
-
-let displayedFilm = DEFAULT_FILM;
+// M9: null until the user picks a film (or one is resolved from BFI's listing).
+let displayedFilm = null;
 let watchedFilms = [];
 
 const filmSelectBtn = document.getElementById("filmSelectBtn");
@@ -18,19 +10,28 @@ const filmSelectBtnLabel = document.getElementById("filmSelectBtnLabel");
 const filmSelectList = document.getElementById("filmSelectList");
 
 function renderFilmDropdown(films) {
-  const allFilms = films.some((f) => f.permalink === displayedFilm.permalink) ? films : [displayedFilm, ...films];
+  const allFilms =
+    !displayedFilm || films.some((f) => f.permalink === displayedFilm.permalink) ? [...films] : [displayedFilm, ...films];
   allFilms.sort((a, b) => a.title.localeCompare(b.title));
 
-  filmSelectBtnLabel.textContent = displayedFilm.title;
-  filmSelectList.innerHTML = allFilms
-    .map(
-      (f) =>
-        `<div class="film-select-option${f.permalink === displayedFilm.permalink ? " selected" : ""}" role="option" data-permalink="${f.permalink}" data-title="${f.title.replace(
-          /"/g,
-          "&quot;"
-        )}">${f.title}</div>`
-    )
-    .join("");
+  filmSelectBtnLabel.textContent = displayedFilm ? displayedFilm.title : "Choose your movie";
+
+  // M9: the placeholder is a real entry in the list, not just the button label,
+  // so there is always something to select back to. Picking it clears the film.
+  const placeholder =
+    `<div class="film-select-option placeholder${displayedFilm ? "" : " selected"}" role="option" data-placeholder="1">` +
+    `Choose your movie</div>`;
+
+  filmSelectList.innerHTML =
+    placeholder +
+    allFilms
+      .map(
+        (f) =>
+          `<div class="film-select-option${f.permalink === displayedFilm?.permalink ? " selected" : ""}" role="option" data-permalink="${escapeHtml(
+            f.permalink
+          )}" data-title="${escapeHtml(f.title)}">${escapeHtml(f.title)}</div>`
+      )
+      .join("");
 }
 
 async function loadFilmDropdown() {
@@ -59,8 +60,19 @@ filmSelectBtn.addEventListener("click", () => {
   }
 });
 
+async function clearDisplayedFilm() {
+  closeFilmSelect();
+  document.getElementById("bellFlash").hidden = true;
+  await sendMessageSafe({ type: "SET_FILM", film: null });
+  currentPage = 1;
+  document.getElementById("meta").textContent = "";
+  await render();
+}
+
 async function switchDisplayedFilm(film) {
   closeFilmSelect();
+  // M7: the flash names a film, so it is wrong the moment the film changes.
+  document.getElementById("bellFlash").hidden = true;
   filmSelectBtnLabel.textContent = film.title;
   filmSelectList.querySelectorAll(".film-select-option").forEach((el) => {
     el.classList.toggle("selected", el.dataset.permalink === film.permalink);
@@ -76,6 +88,10 @@ async function switchDisplayedFilm(film) {
 filmSelectList.addEventListener("click", async (e) => {
   const option = e.target.closest(".film-select-option");
   if (!option) return;
+  if (option.dataset.placeholder) {
+    await clearDisplayedFilm();
+    return;
+  }
   await switchDisplayedFilm({ title: option.dataset.title, permalink: option.dataset.permalink });
 });
 
@@ -87,11 +103,56 @@ document.addEventListener("keydown", (e) => {
 });
 
 function isDisplayedFilmWatched() {
-  return watchedFilms.some((f) => f.permalink === displayedFilm.permalink);
+  return !!displayedFilm && watchedFilms.some((f) => f.permalink === displayedFilm.permalink);
 }
+
+// L2: a film the extension retired by itself must not disappear silently.
+async function renderRetiredNotice() {
+  const box = document.getElementById("retiredNotice");
+  const { retiredFilms = [] } = await chrome.storage.local.get("retiredFilms");
+  if (!retiredFilms.length) {
+    box.hidden = true;
+    return;
+  }
+  // One sentence per reason - a mixed list must not be labelled with whichever
+  // reason happened to come first.
+  const REASONS = {
+    "run-ended": "the run has finished",
+    "no-listings": "BFI stopped listing it",
+    "never-announced": "BFI still hasn't announced any dates after 300 days",
+  };
+  const byReason = new Map();
+  for (const f of retiredFilms) {
+    const key = REASONS[f.reason] || "it is no longer listed";
+    if (!byReason.has(key)) byReason.set(key, []);
+    byReason.get(key).push(`<strong>${escapeHtml(f.title)}</strong>`);
+  }
+  const sentences = [...byReason.entries()]
+    .map(([reason, names]) => `Stopped watching ${names.join(", ")} - ${reason}.`)
+    .join(" ");
+
+  box.innerHTML =
+    `<span>🎬</span><span>${sentences} ` +
+    `Pick it again from the menu any time. ` +
+    `<a href="#" id="retiredDismiss">Dismiss</a></span>`;
+  box.hidden = false;
+}
+
+document.getElementById("retiredNotice")?.addEventListener("click", async (e) => {
+  if (!e.target.closest("#retiredDismiss")) return;
+  e.preventDefault();
+  await chrome.storage.local.set({ retiredFilms: [] });
+  document.getElementById("retiredNotice").hidden = true;
+});
 
 function renderWatchToggle() {
   const btn = document.getElementById("watchToggle");
+  btn.disabled = !displayedFilm;
+  if (!displayedFilm) {
+    btn.textContent = "🔔 Choose your movie first";
+    btn.classList.remove("active");
+    return;
+  }
   const watched = isDisplayedFilmWatched();
   if (!watched) {
     btn.textContent = "🔔 Get notified for all screenings";
@@ -123,27 +184,13 @@ function formatStatus(status) {
   return status === "available" ? "✓" : status === "sold_out" ? "Sold out" : "Unknown";
 }
 
-const WEEKDAY_ABBREVIATIONS = {
-  Sunday: "Sun",
-  Monday: "Mon",
-  Tuesday: "Tue",
-  Wednesday: "Wed",
-  Thursday: "Thu",
-  Friday: "Fri",
-  Saturday: "Sat",
-};
-
-function formatDateTime(dateTime) {
-  return dateTime.replace(/^(\w+)/, (day) => WEEKDAY_ABBREVIATIONS[day] || day);
-}
-
 let notifyDateTimes = new Set();
 
 function screeningRow(s) {
   const inner = `<span class="when">${formatDateTime(s.dateTime)}</span><span class="badge ${s.status}">${formatStatus(
     s.status
   )}</span>`;
-  const dt = s.dateTime.replace(/"/g, "&quot;");
+  const dt = escapeHtml(s.dateTime);
 
   if (s.status === "available") {
     return `<button type="button" class="screening available" data-datetime="${dt}" data-page="${s.page ||
@@ -180,8 +227,8 @@ document.getElementById("bellFlash")?.addEventListener("click", (e) => {
 async function showWatchFlash() {
   const badge = await buildChannelBadge();
   const headline = badge.anyActive
-    ? `Notified for any screening of <strong>${displayedFilm.title}</strong>`
-    : `<strong>${displayedFilm.title}</strong> added, but you WON'T be notified - desktop notifications are off`;
+    ? `Notified for any screening of <strong>${escapeHtml(displayedFilm.title)}</strong>`
+    : `<strong>${escapeHtml(displayedFilm.title)}</strong> added, but you WON'T be notified - desktop notifications are off`;
   showFlash(headline, badge.text);
 }
 
@@ -191,7 +238,7 @@ async function showBellFlash(added, dateTime, justStartedWatching = false, unfol
   const followNote = justStartedWatching ? " - notifications turned on for this film" : "";
 
   if (unfollowed) {
-    showFlash(`Removed <strong>${formatDateTime(dateTime)}</strong> - no times left, so you're no longer following <strong>${displayedFilm.title}</strong>`, null);
+    showFlash(`Removed <strong>${formatDateTime(dateTime)}</strong> - no times left, so you're no longer following <strong>${escapeHtml(displayedFilm.title)}</strong>`, null);
   } else if (notifyDateTimes.size === 0) {
     showFlash(`Watching any open slot${followNote}`, badgeSub);
   } else if (added) {
@@ -249,7 +296,8 @@ document.getElementById("list")?.addEventListener("click", async (e) => {
   badge.textContent = originalBadgeText;
   btn.disabled = false;
   if (!result?.ok) {
-    document.getElementById("meta").textContent = `Couldn't open that screening: ${result?.reason || "unknown error"}`;
+    document.getElementById("meta").textContent =
+      `Couldn't open that screening (${result?.reason || "unknown error"}) - the film page is open in a background tab, book from there.`;
   }
 });
 
@@ -271,16 +319,18 @@ async function render() {
     "watchedFilms",
     "filmStates",
   ]);
-  displayedFilm = df || DEFAULT_FILM;
+  displayedFilm = df || null;
   watchedFilms = wf;
 
-  const state = filmStates[displayedFilm.permalink] || {};
+  const state = displayedFilm ? filmStates[displayedFilm.permalink] || {} : {};
   cachedScreenings = state.lastScreenings || [];
   hasCheckedOnce = !!state.lastCheck;
   notifyDateTimes = new Set(state.notifyDateTimes || []);
 
   renderList();
   renderWatchToggle();
+  await renderRetiredNotice();
+  sendMessageSafe({ type: "ALERTS_SEEN" });
 
   const meta = document.getElementById("meta");
   const when = formatLastChecked(state.lastCheck);
@@ -312,10 +362,13 @@ function renderList() {
   const list = document.getElementById("list");
   const pager = document.getElementById("pager");
   if (!sorted.length) {
-    list.innerHTML = hasCheckedOnce
+    list.innerHTML = !displayedFilm
+      ? '<div class="empty">Choose your movie from the menu above to see its screenings.</div>'
+      : hasCheckedOnce
       ? '<div class="empty">No screening times yet - BFI hasn\'t announced dates for this film. Tap "Get notified for all screenings" above to hear the moment they do.</div>'
       : '<div class="empty">If no data is appearing, click "Check now".</div>';
     pager.hidden = true;
+    document.getElementById("pageInfo").textContent = "";
     return;
   }
 
@@ -404,11 +457,26 @@ document.getElementById("checkNow")?.addEventListener("click", async (e) => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await render();
-  sendMessageSafe({ type: "CHECK_NOW" });
-  sendMessageSafe({ type: "CHECK_ALL_WATCHED" });
+  // Sequential: the displayed film may also be a watched film, and two checks of
+  // the same film in parallel notify twice for the same screening.
+  await sendMessageSafe({ type: "CHECK_NOW" });
+  await sendMessageSafe({ type: "CHECK_ALL_WATCHED" });
 });
 document.addEventListener("DOMContentLoaded", loadFilmDropdown);
-window.addEventListener("pagehide", () => chrome.action.setBadgeText({ text: "" }));
+
+// H4: Chrome does not pin a new extension, and it draws no badge on the
+// puzzle-piece icon. An extension cannot pin itself, so tell the user how.
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const { isOnToolbar } = await chrome.action.getUserSettings();
+    document.getElementById("pinHint").hidden = isOnToolbar !== false;
+  } catch (err) {
+    // getUserSettings needs Chrome 91+; on older builds just leave the hint off.
+  }
+});
+// M5: the badge used to be wiped on pagehide, which fires every time the popup
+// loses focus - often before the user had read it. It is cleared in render()
+// instead, once the list is actually on screen.
 
 setInterval(renderAlarmInfo, 1000);
 

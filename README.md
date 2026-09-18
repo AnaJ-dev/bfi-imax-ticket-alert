@@ -1,5 +1,7 @@
 # BFI IMAX Ticket Alert
 
+Chrome extension address: https://chromewebstore.google.com/detail/dmelhhhlamfbeoeclnpbcpadfokaieib?utm_source=item-share-cb
+
 Chrome extension that watches BFI IMAX screenings for sold-out slots that open up, for any number of films at once. Checking happens fully in the background — a routine check normally opens no window or tab. The exception is a Cloudflare block: the extension then opens a short-lived minimized window to refresh its session, and closes it again. When a screening flips from sold out to bookable, it:
 
 1. Fires a desktop notification immediately.
